@@ -1,0 +1,6 @@
+--c99 -c --cpu Cortex-M0+ -D__MICROLIB -g -O3 --apcs=interwork --split_sections -I ../Inc -I ../Drivers/STM32L0xx_HAL_Driver/Inc -I ../Drivers/STM32L0xx_HAL_Driver/Inc/Legacy -I ../Drivers/CMSIS/Device/ST/STM32L0xx/Include -I ../Drivers/CMSIS/Include
+-I.\RTE\_GPS_NB73_G
+-IC:\Keil_v5\ARM\PACK\ARM\CMSIS\5.6.0\CMSIS\Core\Include
+-IC:\Keil_v5\ARM\PACK\Keil\STM32L0xx_DFP\2.0.1\Drivers\CMSIS\Device\ST\STM32L0xx\Include
+-D__UVISION_VERSION="524" -D_RTE_ -DSTM32L010x6 -DUSE_HAL_DRIVER -DSTM32L010x6
+-o gps_nb73_g\dma.o --omf_browse gps_nb73_g\dma.crf --depend gps_nb73_g\dma.d --feedback "GPS_NB73_G\GPS_NB73_G.fed" "../Src/dma.c"
