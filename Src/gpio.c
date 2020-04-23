@@ -21,6 +21,7 @@
 #include "gpio.h"
 /* USER CODE BEGIN 0 */
 __IO uint16_t step;
+__IO ITStatus StepReady;
 __IO ITStatus AlarmReady;
 /* USER CODE END 0 */
 
@@ -220,10 +221,10 @@ void MX_GPIO_Init(void)
   LL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
   /**/
-  GPIO_InitStruct.Pin = U_GPS_STATUS_Pin;
-  GPIO_InitStruct.Mode = LL_GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pin = LL_GPIO_PIN_7;
+  GPIO_InitStruct.Mode = LL_GPIO_MODE_ANALOG;
   GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
-  LL_GPIO_Init(U_GPS_STATUS_GPIO_Port, &GPIO_InitStruct);
+  LL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
   /**/
   GPIO_InitStruct.Pin = LL_GPIO_PIN_8;
@@ -274,7 +275,7 @@ void MX_GPIO_Init(void)
   /* EXTI interrupt init*/
   NVIC_SetPriority(EXTI0_1_IRQn, 3);
   NVIC_EnableIRQ(EXTI0_1_IRQn);
-  NVIC_SetPriority(EXTI2_3_IRQn, 2);
+  NVIC_SetPriority(EXTI2_3_IRQn, 1);
   NVIC_EnableIRQ(EXTI2_3_IRQn);
 
 }
@@ -324,6 +325,7 @@ void REL_EXTI_DisInit(void)
 void Int1_Callback(void)
 {
 	step++;
+	StepReady = SET;
 //	printf("Step is %d\n",step);
 
   /* NOTE: This function Should not be modified, when the callback is needed,

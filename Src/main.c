@@ -20,8 +20,10 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "iwdg.h"
 #include "lptim.h"
 #include "usart.h"
+#include "rtc.h"
 #include "spi.h"
 #include "gpio.h"
 
@@ -44,6 +46,7 @@ extern __IO uint32_t step;
 extern __IO ITStatus LptimReady;
 extern __IO ITStatus PregnantReady;
 extern __IO uint8_t RxCounter;
+extern __IO ITStatus StepReady;
 extern __IO ITStatus AlarmReady;
 __IO uint16_t Pregnant_Buffer_Flag = 0;
 __IO FlagStatus SendState = RESET;
@@ -72,6 +75,7 @@ __IO FlagStatus RecState = RESET;
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 /* USER CODE BEGIN PFP */
+static void SystemPower_Config(void);
 static void Show_Message(void);
 /* USER CODE END PFP */
 
@@ -112,6 +116,8 @@ int main(void)
   MX_SPI1_Init();
   MX_LPUART1_UART_Init();
   MX_LPTIM1_Init();
+  MX_RTC_Init();
+  MX_IWDG_Init();
   /* USER CODE BEGIN 2 */
 	REL_EXTI_DisInit();
 	Activate_SPI();
@@ -122,7 +128,7 @@ int main(void)
 	GPS_CHARGE_ON();
 	LL_mDelay(12000);
 	Show_Message();
-	LL_mDelay(1000);
+	LL_mDelay(2000);
   /* Enable RXNE and Error interrupts */
   LL_LPUART_EnableIT_RXNE(LPUART1);
 	LL_LPUART_EnableIT_ERROR(LPUART1);
@@ -134,6 +140,8 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+		/* Refresh IWDG down-counter to default value */
+		LL_IWDG_ReloadCounter(IWDG);
 		if(PregnantReady == SET)
 		{
 			if(Pregnant_Buffer_Flag == PREGNANTBUFFERFLAGLENGTH)
@@ -181,7 +189,7 @@ int main(void)
 				PrintInfo((uint8_t*)TxBuffer, TXBUFFERSIZE);
 				for (i=0; i<RXBUFFERSIZE; i++) //clear array
 				{	RxBuffer[i] = 0; }
-				LL_mDelay(50);
+				LL_mDelay(200);
 				Bufferchg((uint8_t*)Pregnant_Buffer, (uint8_t*)Pregnant_TxBuffer, PREGNANTBUFFERSIZE, TxPREGNANTBUFFERSIZE);
 				PrintInfo((uint8_t*)Pregnant_TxBuffer, TxPREGNANTBUFFERSIZE);
 				LL_mDelay(4000);
@@ -201,10 +209,25 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-				
-		/* Enter LP RUN Mode */
-//    HAL_PWREx_EnableLowPowerRunMode();
-//		HAL_PWREx_DisableLowPowerRunMode();
+	
+		if(PregnantReady != SET && LptimReady != SET && AlarmReady != SET && SendState != SET && AlarmState != SET)
+		{
+			MX_LPUART1_UART_DeInit();
+			MX_SPI1_DeInit();
+			SystemPower_Config();
+			/* Enter Stop Mode */
+			HAL_PWR_EnterSTOPMode(PWR_LOWPOWERREGULATOR_ON, PWR_STOPENTRY_WFI);
+			
+			SystemClock_Config();
+			MX_SPI1_Init();
+			MX_LPUART1_UART_Init();
+			LL_LPUART_EnableIT_RXNE(LPUART1);
+			LL_LPUART_EnableIT_ERROR(LPUART1);
+			Activate_SPI();
+			Activate_LPUART1();
+			RxCounter = 0x00;
+			LED_RED_TOG();
+		}
   }
   /* USER CODE END 3 */
 }
@@ -221,18 +244,20 @@ void SystemClock_Config(void)
 
   /** Configure the main internal regulator output voltage 
   */
-  __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
+  __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE2);
   /** Configure LSE Drive Capability 
   */
   HAL_PWR_EnableBkUpAccess();
   __HAL_RCC_LSEDRIVE_CONFIG(RCC_LSEDRIVE_LOW);
   /** Initializes the CPU, AHB and APB busses clocks 
   */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_LSE|RCC_OSCILLATORTYPE_MSI;
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_LSI|RCC_OSCILLATORTYPE_LSE
+                              |RCC_OSCILLATORTYPE_MSI;
   RCC_OscInitStruct.LSEState = RCC_LSE_ON;
+  RCC_OscInitStruct.LSIState = RCC_LSI_ON;
   RCC_OscInitStruct.MSIState = RCC_MSI_ON;
   RCC_OscInitStruct.MSICalibrationValue = 0;
-  RCC_OscInitStruct.MSIClockRange = RCC_MSIRANGE_4;
+  RCC_OscInitStruct.MSIClockRange = RCC_MSIRANGE_5;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_NONE;
   if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
   {
@@ -251,8 +276,10 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
-  PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_LPUART1|RCC_PERIPHCLK_LPTIM1;
+  PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_LPUART1|RCC_PERIPHCLK_RTC
+                              |RCC_PERIPHCLK_LPTIM1;
   PeriphClkInit.Lpuart1ClockSelection = RCC_LPUART1CLKSOURCE_LSE;
+  PeriphClkInit.RTCClockSelection = RCC_RTCCLKSOURCE_LSE;
   PeriphClkInit.LptimClockSelection = RCC_LPTIM1CLKSOURCE_LSE;
 
   if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK)
@@ -262,6 +289,45 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
+
+/**
+  * @brief  System Power Configuration
+  *         The system Power is configured as follow :
+  *            + Regulator in LP mode
+  *            + VREFINT OFF, with fast wakeup enabled
+  *            + HSI as SysClk after Wake Up
+  *            + No IWDG
+  *            + Automatic Wakeup using RTC clocked by LSI (after ~4s)
+  * @param  None
+  * @retval None
+  */
+static void SystemPower_Config(void)
+{
+	/* Disable Wakeup Counter */
+	HAL_RTCEx_DeactivateWakeUpTimer(&hrtc);
+	/* ## Setting the Wake up time ############################################*/
+	/*  RTC Wakeup Interrupt Generation:
+			Wakeup Time Base = (RTC_WAKEUPCLOCK_RTCCLK_DIV /(LSE or LSI))
+			Wakeup Time = Wakeup Time Base * WakeUpCounter 
+			= (RTC_WAKEUPCLOCK_RTCCLK_DIV /(LSE or LSI)) * WakeUpCounter
+				==> WakeUpCounter = Wakeup Time / Wakeup Time Base
+    
+			To configure the wake up timer to 10s the WakeUpCounter is set to 0x5000 for LSE:
+			RTC_WAKEUPCLOCK_RTCCLK_DIV = RTCCLK_Div16 = 16 
+			Wakeup Time Base = 16 /(32.768KHz) = 0.48828125 ms
+			Wakeup Time = 10s = 0.48828125ms  * WakeUpCounter
+				==> WakeUpCounter = 10s/0.48828125ms = 20480 = 0x5000 */
+	HAL_RTCEx_SetWakeUpTimer_IT(&hrtc, 0x5000, RTC_WAKEUPCLOCK_RTCCLK_DIV16);
+	
+  /* Enable Power Control clock */
+  __HAL_RCC_PWR_CLK_ENABLE();
+
+  /* Enable Ultra low power mode */
+  HAL_PWREx_EnableUltraLowPower();
+
+  /* Enable the fast wake up from Ultra low power mode */
+  HAL_PWREx_EnableFastWakeUp();
+}
 
 static void Show_Message(void)
 {

@@ -60,7 +60,7 @@ void MX_LPUART1_UART_Init(void)
   LL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
   /* LPUART1 interrupt Init */
-  NVIC_SetPriority(LPUART1_IRQn, 0);
+  NVIC_SetPriority(LPUART1_IRQn, 2);
   NVIC_EnableIRQ(LPUART1_IRQn);
 
   LPUART_InitStruct.BaudRate = 9600;
@@ -76,6 +76,32 @@ void MX_LPUART1_UART_Init(void)
 }
 
 /* USER CODE BEGIN 1 */
+
+void MX_LPUART1_UART_DeInit(void)
+{
+  LL_GPIO_InitTypeDef GPIO_InitStruct = {0};
+  
+  /* Peripheral clock disable */
+  LL_APB1_GRP1_DisableClock(LL_APB1_GRP1_PERIPH_LPUART1);
+	
+  LL_IOP_GRP1_EnableClock(LL_IOP_GRP1_PERIPH_GPIOB);
+  /**LPUART1 GPIO Configuration
+  PB10   ------> LPUART1_TX
+  PB11   ------> LPUART1_RX 
+  */
+  GPIO_InitStruct.Pin = LL_GPIO_PIN_10;
+  GPIO_InitStruct.Mode = LL_GPIO_MODE_ANALOG;
+  GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
+  LL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+  GPIO_InitStruct.Pin = LL_GPIO_PIN_11;
+  GPIO_InitStruct.Mode = LL_GPIO_MODE_ANALOG;
+  GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
+  LL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+	
+	LL_LPUART_Disable(LPUART1);
+  LL_LPUART_DeInit(LPUART1);
+}
 
 /**
   * @brief  This function Activate LPUART1

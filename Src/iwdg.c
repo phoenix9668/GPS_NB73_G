@@ -1,8 +1,8 @@
 /**
   ******************************************************************************
-  * File Name          : USART.h
+  * File Name          : IWDG.c
   * Description        : This file provides code for the configuration
-  *                      of the USART instances.
+  *                      of the IWDG instances.
   ******************************************************************************
   * @attention
   *
@@ -16,45 +16,33 @@
   *
   ******************************************************************************
   */
-/* Define to prevent recursive inclusion -------------------------------------*/
-#ifndef __usart_H
-#define __usart_H
-#ifdef __cplusplus
- extern "C" {
-#endif
 
 /* Includes ------------------------------------------------------------------*/
-#include "main.h"
+#include "iwdg.h"
 
-/* USER CODE BEGIN Includes */
+/* USER CODE BEGIN 0 */
 
-/* USER CODE END Includes */
+/* USER CODE END 0 */
 
-/* USER CODE BEGIN Private defines */
+/* IWDG init function */
+void MX_IWDG_Init(void)
+{
 
-/* USER CODE END Private defines */
+  LL_IWDG_Enable(IWDG);
+  LL_IWDG_EnableWriteAccess(IWDG);
+  LL_IWDG_SetPrescaler(IWDG, LL_IWDG_PRESCALER_256);
+  LL_IWDG_SetReloadCounter(IWDG, 4095);
+  while (LL_IWDG_IsReady(IWDG) != 1)
+  {
+  }
 
-void MX_LPUART1_UART_Init(void);
+  LL_IWDG_SetWindow(IWDG, 4095);
+  LL_IWDG_ReloadCounter(IWDG);
 
-/* USER CODE BEGIN Prototypes */
-void MX_LPUART1_UART_DeInit(void);
-void Activate_LPUART1(void);
-void PrintInfo(uint8_t *String, uint32_t Size);
-void LPUART_CharReception_Callback(void);
-void Error_Callback(void);
-/* USER CODE END Prototypes */
-
-#ifdef __cplusplus
 }
-#endif
-#endif /*__ usart_H */
 
-/**
-  * @}
-  */
+/* USER CODE BEGIN 1 */
 
-/**
-  * @}
-  */
+/* USER CODE END 1 */
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

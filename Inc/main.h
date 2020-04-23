@@ -29,9 +29,11 @@ extern "C" {
 
 /* Includes ------------------------------------------------------------------*/
 #include "stm32l0xx_hal.h"
+#include "stm32l0xx_ll_iwdg.h"
 #include "stm32l0xx_ll_lptim.h"
 #include "stm32l0xx_ll_lpuart.h"
 #include "stm32l0xx_ll_rcc.h"
+#include "stm32l0xx_hal.h"
 #include "stm32l0xx_ll_spi.h"
 #include "stm32l0xx.h"
 #include "stm32l0xx_ll_system.h"
@@ -95,8 +97,6 @@ void Error_Handler(void);
 #define LED_CHARGE_GPIO_Port GPIOA
 #define LED_GREEN_Pin LL_GPIO_PIN_5
 #define LED_GREEN_GPIO_Port GPIOB
-#define U_GPS_STATUS_Pin LL_GPIO_PIN_7
-#define U_GPS_STATUS_GPIO_Port GPIOB
 #define LED_RED_Pin LL_GPIO_PIN_9
 #define LED_RED_GPIO_Port GPIOB
 /* USER CODE BEGIN Private defines */

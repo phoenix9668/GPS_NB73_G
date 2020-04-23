@@ -81,6 +81,38 @@ void MX_SPI1_Init(void)
 
 /* USER CODE BEGIN 1 */
 
+void MX_SPI1_DeInit(void)
+{
+  LL_GPIO_InitTypeDef GPIO_InitStruct = {0};
+  
+	/* Peripheral clock enable */
+  LL_APB2_GRP1_DisableClock(LL_APB2_GRP1_PERIPH_SPI1);
+	
+  LL_IOP_GRP1_EnableClock(LL_IOP_GRP1_PERIPH_GPIOA);
+  /**SPI1 GPIO Configuration  
+  PA5   ------> SPI1_SCK
+  PA6   ------> SPI1_MISO
+  PA7   ------> SPI1_MOSI 
+  */
+	GPIO_InitStruct.Pin = LL_GPIO_PIN_5;
+  GPIO_InitStruct.Mode = LL_GPIO_MODE_ANALOG;
+  GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
+  LL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+	GPIO_InitStruct.Pin = LL_GPIO_PIN_6;
+  GPIO_InitStruct.Mode = LL_GPIO_MODE_ANALOG;
+  GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
+  LL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+	
+	GPIO_InitStruct.Pin = LL_GPIO_PIN_7;
+  GPIO_InitStruct.Mode = LL_GPIO_MODE_ANALOG;
+  GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
+  LL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+	LL_SPI_Disable(SPI1);
+  LL_SPI_DeInit(SPI1);
+}
+
 /**
   * @brief  This function Activate SPI1
   * @param  None
