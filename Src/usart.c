@@ -24,6 +24,7 @@
 #include "gpio.h"
 extern uint8_t RxBuffer[RXBUFFERSIZE];
 __IO uint8_t RxCounter = 0;
+__IO FlagStatus CommandState = RESET;
 extern __IO uint8_t i;
 /* USER CODE END 0 */
 
@@ -175,12 +176,19 @@ void LPUART_CharReception_Callback(void)
   /* Echo received character on TX */
 //  LL_LPUART_TransmitData8(LPUART1, RxBuffer[RxCounter-1]);
 	/* Check if received value is corresponding to specific one : S or s */
-  if ((RxBuffer[RxCounter-1] == 0xCB) || (RxBuffer[RxCounter-1] == 0x0A))
+  if (RxBuffer[RxCounter-1] == 0xCB)
   {
     /* Clear RxCounter : Expected character has been received */
     RxCounter = 0x00;
 //		for (i=0; i<RXBUFFERSIZE; i++) //clear array
 //		{	RxBuffer[i] = 0; }
+  }
+		/* Check if received value is corresponding to specific one : S or s */
+  if (RxBuffer[RxCounter-1] == 0x0A)
+  {
+    /* Clear RxCounter : Expected character has been received */
+    RxCounter = 0x00;
+		CommandState = SET;
   }
 }
 

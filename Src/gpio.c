@@ -20,8 +20,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "gpio.h"
 /* USER CODE BEGIN 0 */
-__IO uint16_t step;
-__IO ITStatus StepReady;
+__IO uint32_t step;
 __IO ITStatus AlarmReady;
 /* USER CODE END 0 */
 
@@ -325,7 +324,7 @@ void REL_EXTI_DisInit(void)
 void Int1_Callback(void)
 {
 	step++;
-	StepReady = SET;
+//	LED_GREEN_TOG();
 //	printf("Step is %d\n",step);
 
   /* NOTE: This function Should not be modified, when the callback is needed,

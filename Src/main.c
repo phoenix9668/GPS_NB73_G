@@ -32,26 +32,32 @@
 uint8_t aTextInfoStart1[] = "NB-GPS module transfer program.\r\n";
 uint8_t aTextInfoStart2[] = "using LPUART1,configuration:9600 8-N-1\r\n";
 uint8_t alarmInfo[] = "03tamper alarm";
+uint8_t ConnectedInfo[] = "04Connected";
+uint8_t OKInfo[] = {0x30,0x36,0x00,0x01,0x00,0x4F,0x4B};//acknowledgeinfo = messageId(0x3036)+mid(0x0001)+errcode(0x00 is success,0x01 is fail)+acknowledge(0x4F4B is OK)
+uint8_t ERInfo[] = {0x30,0x36,0x00,0x01,0x01,0x45,0x52};//acknowledgeinfo = messageId(0x3036)+mid(0x0001)+errcode(0x00 is success,0x01 is fail)+acknowledge(0x4552 is ER)
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
 __IO uint8_t i;
-uint8_t Pregnant_Buffer[PREGNANTBUFFERSIZE]={0,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72};
+uint8_t Pregnant_Buffer[PREGNANTBUFFERSIZE]={2,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72};
 uint8_t Pregnant_TxBuffer[TxPREGNANTBUFFERSIZE];
 uint8_t RxBuffer[RXBUFFERSIZE];
 uint8_t TxTempBuffer[TxPREGNANTBUFFERSIZE];
 uint8_t TxBuffer[TXBUFFERSIZE];
 extern __IO uint32_t step;
 extern __IO ITStatus LptimReady;
+extern __IO ITStatus PowerOffReady;
 extern __IO ITStatus PregnantReady;
+extern __IO uint8_t wakeupTimeBase;
+extern __IO uint8_t WAKEUPTIME;
 extern __IO uint8_t RxCounter;
-extern __IO ITStatus StepReady;
 extern __IO ITStatus AlarmReady;
-__IO uint16_t Pregnant_Buffer_Flag = 0;
+__IO uint8_t Pregnant_Buffer_Flag = 0;
 __IO FlagStatus SendState = RESET;
 __IO FlagStatus AlarmState = RESET;
-__IO FlagStatus RecState = RESET;
+__IO FlagStatus ConnectedState = RESET;
+extern __IO FlagStatus CommandState;
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -142,19 +148,23 @@ int main(void)
   {
 		/* Refresh IWDG down-counter to default value */
 		LL_IWDG_ReloadCounter(IWDG);
+		
 		if(PregnantReady == SET)
 		{
 			if(Pregnant_Buffer_Flag == PREGNANTBUFFERFLAGLENGTH)
 			{
 				Pregnant_Buffer_Flag = 0;
 			}
-			else{
+			else
+			{
 				Pregnant_Buffer_Flag++;
 			}
+			
 			*(Pregnant_Buffer+Pregnant_Buffer_Flag*2+2) = (uint8_t)(0x000000FF & step>>8);
 			*(Pregnant_Buffer+Pregnant_Buffer_Flag*2+3) = (uint8_t)(0x000000FF & step);
 			Pregnant_Buffer[0] = 0x02;
 			Pregnant_Buffer[1] = Pregnant_Buffer_Flag;
+			
 			EEPROM_WRITE(0,Pregnant_Buffer,PREGNANTBUFFERSIZE);
 			step = 0;
 			PregnantReady = RESET;
@@ -180,37 +190,79 @@ int main(void)
 			RxCounter = 0x00;
 		}
 		
-		if(RxBuffer[0] == 0x01 && RxBuffer[1] == 0x46 && RxBuffer[2] == 0x00 && RxBuffer[3] == 0x00 && RxBuffer[4] == 0x00 && RxBuffer[5] == 0x16 && RxBuffer[6] == 0x2C)
+		if(PowerOffReady == SET)
+		{
+			SendState = RESET;
+			AlarmState = RESET;
+			ConnectedState = RESET;
+			PowerOffReady = RESET;
+		
+		if(RxBuffer[0] == 0x43 && RxBuffer[1] == 0x6F && RxBuffer[2] == 0x6E && RxBuffer[3] == 0x6E && RxBuffer[4] == 0x65 && RxBuffer[5] == 0x63 && RxBuffer[6] == 0x74 && RxBuffer[7] == 0x65 && RxBuffer[8] == 0x64)
 		{
 			if(SendState == SET)
 			{
-				LL_mDelay(200);
-				Bufferchg((uint8_t*)RxBuffer, (uint8_t*)TxBuffer, RXBUFFERSIZE, TXBUFFERSIZE);
-				PrintInfo((uint8_t*)TxBuffer, TXBUFFERSIZE);
+				if(ConnectedState == RESET)
+				{
+					LL_mDelay(2000);
+					PrintInfo((uint8_t*)ConnectedInfo, sizeof(ConnectedInfo));
+					LL_mDelay(100);
+					Bufferchg((uint8_t*)Pregnant_Buffer, (uint8_t*)Pregnant_TxBuffer, PREGNANTBUFFERSIZE, TxPREGNANTBUFFERSIZE);
+					PrintInfo((uint8_t*)Pregnant_TxBuffer, TxPREGNANTBUFFERSIZE);
+					ConnectedState = SET;
+				}
 				for (i=0; i<RXBUFFERSIZE; i++) //clear array
 				{	RxBuffer[i] = 0; }
-				LL_mDelay(200);
-				Bufferchg((uint8_t*)Pregnant_Buffer, (uint8_t*)Pregnant_TxBuffer, PREGNANTBUFFERSIZE, TxPREGNANTBUFFERSIZE);
-				PrintInfo((uint8_t*)Pregnant_TxBuffer, TxPREGNANTBUFFERSIZE);
-				LL_mDelay(4000);
-				SendState = RESET;
+				RxCounter = 0x00;
 			}
+		}
+		
+		if(RxBuffer[0] == 0x30 && RxBuffer[1] == 0x35)
+		{
+			if(CommandState == SET)
+			{
+				if(RxBuffer[4] == 0x41 && RxBuffer[5] == 0x41 && RxBuffer[6] == 0x43 && RxBuffer[7] == 0x43 && RxBuffer[8] == 0x30 && RxBuffer[9] == 0x31 && RxBuffer[10] >= 0x03)
+				{
+					WAKEUPTIME = RxBuffer[10];
+					wakeupTimeBase = 0x00;
+					OKInfo[2] = RxBuffer[2];
+					OKInfo[3] = RxBuffer[3];
+					PrintInfo((uint8_t*)OKInfo, sizeof(OKInfo));
+				}
+				else
+				{
+					ERInfo[2] = RxBuffer[2];
+					ERInfo[3] = RxBuffer[3];
+					PrintInfo((uint8_t*)ERInfo, sizeof(ERInfo));
+				}
+				CommandState = RESET;
+			}
+		}
+		
+		if(RxBuffer[0] == 0x01 && RxBuffer[1] == 0x46 && RxBuffer[2] == 0x00 && RxBuffer[3] == 0x00 && RxBuffer[4] == 0x00 && RxBuffer[5] == 0x16 && RxBuffer[6] == 0x2C)
+		{
+			LL_mDelay(50);
+			Bufferchg((uint8_t*)RxBuffer, (uint8_t*)TxBuffer, RXBUFFERSIZE, TXBUFFERSIZE);
+			PrintInfo((uint8_t*)TxBuffer, TXBUFFERSIZE);
+			SendState = RESET;
 			if(AlarmState == SET)
 			{
 				LL_mDelay(200);
 				PrintInfo((uint8_t*)alarmInfo, sizeof(alarmInfo));
-				LL_mDelay(2000);
 				AlarmState = RESET;
 			}
-			LED_CHARGE_OFF();
-			GPS_CHARGE_OFF();
-			REL_EXTI_Init();
+			for (i=0; i<RXBUFFERSIZE; i++) //clear array
+			{	RxBuffer[i] = 0; }
+			RxCounter = 0x00;
+			ConnectedState = RESET;
 		}
+		
+		/* Refresh IWDG down-counter to default value */
+		LL_IWDG_ReloadCounter(IWDG);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
 	
-		if(PregnantReady != SET && LptimReady != SET && AlarmReady != SET && SendState != SET && AlarmState != SET)
+		if(PregnantReady == RESET && LptimReady == RESET && AlarmReady == RESET && SendState == RESET && AlarmState == RESET)
 		{
 			MX_LPUART1_UART_DeInit();
 			MX_SPI1_DeInit();
@@ -219,14 +271,19 @@ int main(void)
 			HAL_PWR_EnterSTOPMode(PWR_LOWPOWERREGULATOR_ON, PWR_STOPENTRY_WFI);
 			
 			SystemClock_Config();
+			LED_CHARGE_OFF();
+			GPS_CHARGE_OFF();
+			REL_EXTI_Init();
 			MX_SPI1_Init();
 			MX_LPUART1_UART_Init();
 			LL_LPUART_EnableIT_RXNE(LPUART1);
 			LL_LPUART_EnableIT_ERROR(LPUART1);
 			Activate_SPI();
 			Activate_LPUART1();
+			for (i=0; i<RXBUFFERSIZE; i++) //clear array
+			{	RxBuffer[i] = 0; }
 			RxCounter = 0x00;
-			LED_RED_TOG();
+//			LED_RED_TOG();
 		}
   }
   /* USER CODE END 3 */
@@ -369,6 +426,7 @@ static void Show_Message(void)
 		{	RxBuffer[i] = 0; }
 		for (i=0; i<TXBUFFERSIZE; i++) //clear array
 		{	TxBuffer[i] = 0; }
+		PrintInfo((uint8_t*)ConnectedInfo, sizeof(ConnectedInfo));
 }
 
 void Bufferchg(uint8_t* RxBuffer, uint8_t* TxBuffer, uint16_t RxBuffersize, uint16_t TxBuffersize)
@@ -529,7 +587,7 @@ void Error_Handler(void)
   while(1)
   {
     /* Error if LED3 is slowly blinking (1 sec. period) */
-    LED_RED_ON();
+    LEDRed_Blinking(1000);
   }  
   /* USER CODE END Error_Handler_Debug */
 }
