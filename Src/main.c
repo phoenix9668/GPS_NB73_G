@@ -40,8 +40,14 @@ uint8_t ERInfo[] = {0x30,0x36,0x00,0x01,0x01,0x45,0x52};//acknowledgeinfo = mess
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
 __IO uint8_t i;
-uint8_t Pregnant_Buffer[PREGNANTBUFFERSIZE]={2,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72};
+uint8_t Pregnant_Buffer[PREGNANTBUFFERSIZE]={2,0,0,0x1E,0,0x27,0,0x02,0,0x03,0,0x92,0,0x3E,0,0x02,0,0x52,0,0x72,0,0x78,0,0x8F,0,0x45,0,0xF0,
+																							0,0x78,0,0x37,0,0x2D,0,0x14,0,0x1F,0,0x33,0,0x0A,0,0x24,0,0x0C,0,0x1E,0,0x4D,0,0x12,0,0x01,
+																								0,0x1E,0,0x14,0,0x06,0,0x0A,0,0x01,0,0x1E,0,0x1E,0,0x04,0,0x28,0,0x32};
+//uint8_t Pregnant_Buffer_backup[PREGNANTBUFFERSIZE]={0,0,0,0x96,0,0x64,0x01,0xAF,0,0xE8,0x02,0x0B,0x01,0xB4,0x02,0x18,0x02,0x13,0x01,0x48,0,0x96,0,0x6A,0,0x52};
 uint8_t Pregnant_TxBuffer[TxPREGNANTBUFFERSIZE];
+uint8_t GNSS_Buffer[GNSSBUFFERSIZE];
+uint8_t ALLGNSS_Buffer[ALLGNSSBUFFERSIZE];
+uint8_t ALLGNSS_TxBuffer[TxALLGNSSBUFFERSIZE];
 uint8_t RxBuffer[RXBUFFERSIZE];
 uint8_t TxTempBuffer[TxPREGNANTBUFFERSIZE];
 uint8_t TxBuffer[TXBUFFERSIZE];
@@ -54,7 +60,11 @@ extern __IO uint8_t WAKEUPTIME;
 extern __IO uint8_t RxCounter;
 extern __IO ITStatus AlarmReady;
 __IO uint8_t Pregnant_Buffer_Flag = 0;
+__IO uint8_t History_Flag = 0;
+__IO uint8_t GNSS_Buffer_Flag = 0;
+__IO uint16_t biasAddress;
 __IO FlagStatus SendState = RESET;
+__IO FlagStatus HistoryState = RESET;
 __IO FlagStatus AlarmState = RESET;
 __IO FlagStatus ConnectedState = RESET;
 extern __IO FlagStatus CommandState;
@@ -159,9 +169,10 @@ int main(void)
 			{
 				Pregnant_Buffer_Flag++;
 			}
-			
 			*(Pregnant_Buffer+Pregnant_Buffer_Flag*2+2) = (uint8_t)(0x000000FF & step>>8);
 			*(Pregnant_Buffer+Pregnant_Buffer_Flag*2+3) = (uint8_t)(0x000000FF & step);
+//			*(Pregnant_Buffer+Pregnant_Buffer_Flag*2+2) = Pregnant_Buffer_backup[Pregnant_Buffer_Flag*2];
+//			*(Pregnant_Buffer+Pregnant_Buffer_Flag*2+3) = Pregnant_Buffer_backup[Pregnant_Buffer_Flag*2+1];
 			Pregnant_Buffer[0] = 0x02;
 			Pregnant_Buffer[1] = Pregnant_Buffer_Flag;
 			
@@ -196,6 +207,7 @@ int main(void)
 			AlarmState = RESET;
 			ConnectedState = RESET;
 			PowerOffReady = RESET;
+		}
 		
 		if(RxBuffer[0] == 0x43 && RxBuffer[1] == 0x6F && RxBuffer[2] == 0x6E && RxBuffer[3] == 0x6E && RxBuffer[4] == 0x65 && RxBuffer[5] == 0x63 && RxBuffer[6] == 0x74 && RxBuffer[7] == 0x65 && RxBuffer[8] == 0x64)
 		{
@@ -215,21 +227,24 @@ int main(void)
 				RxCounter = 0x00;
 			}
 		}
-		
-		if(RxBuffer[0] == 0x30 && RxBuffer[1] == 0x35)
+		if(RxBuffer[0] == 0x30 && RxBuffer[1] == 0x35 && RxBuffer[4] == 0x41 && RxBuffer[5] == 0x41 && RxBuffer[6] == 0x43 && RxBuffer[7] == 0x43 && RxBuffer[14] == 0x0A)
 		{
 			if(CommandState == SET)
 			{
-				if(RxBuffer[4] == 0x41 && RxBuffer[5] == 0x41 && RxBuffer[6] == 0x43 && RxBuffer[7] == 0x43 && RxBuffer[8] == 0x30 && RxBuffer[9] == 0x31 && RxBuffer[10] >= 0x03)
+				if(RxBuffer[8] == 0x30 && RxBuffer[9] == 0x31 && RxBuffer[10] >= 0x03)
 				{
 					WAKEUPTIME = RxBuffer[10];
 					wakeupTimeBase = 0x00;
+					OKInfo[0] = 0x30;
+					OKInfo[1] = 0x36;
 					OKInfo[2] = RxBuffer[2];
 					OKInfo[3] = RxBuffer[3];
 					PrintInfo((uint8_t*)OKInfo, sizeof(OKInfo));
 				}
 				else
 				{
+					ERInfo[0] = 0x30;
+					ERInfo[1] = 0x36;
 					ERInfo[2] = RxBuffer[2];
 					ERInfo[3] = RxBuffer[3];
 					PrintInfo((uint8_t*)ERInfo, sizeof(ERInfo));
@@ -237,10 +252,67 @@ int main(void)
 				CommandState = RESET;
 			}
 		}
+
+		if(RxBuffer[0] == 0x30 && RxBuffer[1] == 0x38 && RxBuffer[4] == 0x41 && RxBuffer[5] == 0x41 && RxBuffer[6] == 0x44 && RxBuffer[7] == 0x44 && RxBuffer[14] == 0x0A)
+		{
+			if(CommandState == SET)
+			{
+				if(RxBuffer[8] == 0x30 && RxBuffer[9] == 0x31)
+				{
+					OKInfo[0] = 0x30;
+					OKInfo[1] = 0x39;
+					OKInfo[2] = RxBuffer[2];
+					OKInfo[3] = RxBuffer[3];
+					PrintInfo((uint8_t*)OKInfo, sizeof(OKInfo));
+					HistoryState = SET;
+					History_Flag = 0x00;
+					LL_mDelay(50);
+				}
+				else
+				{
+					ERInfo[0] = 0x30;
+					ERInfo[1] = 0x39;
+					ERInfo[2] = RxBuffer[2];
+					ERInfo[3] = RxBuffer[3];
+					PrintInfo((uint8_t*)ERInfo, sizeof(ERInfo));
+				}
+				CommandState = RESET;
+			}
+		}
+
+		
+		/* Refresh IWDG down-counter to default value */
+		LL_IWDG_ReloadCounter(IWDG);
 		
 		if(RxBuffer[0] == 0x01 && RxBuffer[1] == 0x46 && RxBuffer[2] == 0x00 && RxBuffer[3] == 0x00 && RxBuffer[4] == 0x00 && RxBuffer[5] == 0x16 && RxBuffer[6] == 0x2C)
 		{
 			LL_mDelay(50);
+			if(RxBuffer[8] != 0x00)
+			{
+				if(GNSS_Buffer_Flag == 5)
+				{
+					GNSS_Buffer_Flag = 0;
+				}
+				else
+				{
+					GNSS_Buffer_Flag++;
+				}
+				biasAddress = 80+22*GNSS_Buffer_Flag;
+				
+				for(i=0; i<GNSSBUFFERSIZE; i++)
+				{
+					if(i >= 18)
+					{
+						GNSS_Buffer[i] = RxBuffer[19+i];
+					}
+					else
+					{
+						GNSS_Buffer[i] = RxBuffer[9+i];
+					}
+				}
+				
+				EEPROM_WRITE(biasAddress, GNSS_Buffer, GNSSBUFFERSIZE);
+			}
 			Bufferchg((uint8_t*)RxBuffer, (uint8_t*)TxBuffer, RXBUFFERSIZE, TXBUFFERSIZE);
 			PrintInfo((uint8_t*)TxBuffer, TXBUFFERSIZE);
 			SendState = RESET;
@@ -250,10 +322,25 @@ int main(void)
 				PrintInfo((uint8_t*)alarmInfo, sizeof(alarmInfo));
 				AlarmState = RESET;
 			}
+			ConnectedState = RESET;
 			for (i=0; i<RXBUFFERSIZE; i++) //clear array
 			{	RxBuffer[i] = 0; }
 			RxCounter = 0x00;
-			ConnectedState = RESET;
+		}
+		
+		if(HistoryState == SET)
+		{
+			biasAddress = 80+24*History_Flag;
+			ALLGNSS_Buffer[0] = 0x07;
+			EEPROM_READ(biasAddress,(uint8_t *)(ALLGNSS_Buffer+1),ALLGNSSBUFFERSIZE-1);
+			Bufferchg((uint8_t*)ALLGNSS_Buffer, (uint8_t*)ALLGNSS_TxBuffer, ALLGNSSBUFFERSIZE, TxALLGNSSBUFFERSIZE);
+			PrintInfo((uint8_t*)ALLGNSS_TxBuffer, TxALLGNSSBUFFERSIZE);
+			History_Flag++;
+			LL_mDelay(50);
+			if(History_Flag == 0x06)
+			{
+				HistoryState = RESET;
+			}
 		}
 		
 		/* Refresh IWDG down-counter to default value */
@@ -262,7 +349,7 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
 	
-		if(PregnantReady == RESET && LptimReady == RESET && AlarmReady == RESET && SendState == RESET && AlarmState == RESET)
+		if(PregnantReady == RESET && LptimReady == RESET && AlarmReady == RESET && SendState == RESET && AlarmState == RESET && HistoryState == RESET)
 		{
 			MX_LPUART1_UART_DeInit();
 			MX_SPI1_DeInit();

@@ -60,10 +60,13 @@ extern "C" {
 /* Size of Trasmission buffer */
 #define TXBUFFERSIZE                      2*RXBUFFERSIZE
 #define TxPREGNANTBUFFERSIZE              2*PREGNANTBUFFERSIZE
+#define TxALLGNSSBUFFERSIZE              	2*ALLGNSSBUFFERSIZE
 /* Size of Reception buffer */
 #define RXBUFFERSIZE                      53
 #define PREGNANTBUFFERSIZE                74
 #define PREGNANTBUFFERFLAGLENGTH					36
+#define GNSSBUFFERSIZE                		22
+#define ALLGNSSBUFFERSIZE               	GNSSBUFFERSIZE+1
 /* USER CODE END EC */
 
 /* Exported macro ------------------------------------------------------------*/
