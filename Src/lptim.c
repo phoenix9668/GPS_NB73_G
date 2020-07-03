@@ -27,6 +27,7 @@ __IO ITStatus PregnantReady = RESET;
 __IO ITStatus PowerOffReady = RESET;
 __IO uint8_t pregnantTimeBase = 0x00;//one step == 128s
 __IO uint8_t wakeupTimeBase = 0x00;//one step == 128s
+__IO uint8_t PowerOffTimeBase = 0x00;//one step == 128s
 __IO uint8_t WAKEUPTIME = 0x38;//384s,must be up to 2
 /* USER CODE END 0 */
 
@@ -74,12 +75,13 @@ void LPTimerAutoreloadMatch_Callback(void)
 {
 	pregnantTimeBase++;
 	wakeupTimeBase++;
+	PowerOffTimeBase++;
 	if(pregnantTimeBase == 0x0A)//1280s
 	{
 		PregnantReady = SET;
 		pregnantTimeBase = 0x00;
 	}
-	if(wakeupTimeBase == 0x02)//256s
+	if(PowerOffTimeBase == 0x02)//256s
 	{
 		PowerOffReady = SET;
 	}
@@ -87,6 +89,7 @@ void LPTimerAutoreloadMatch_Callback(void)
 	{
 		LptimReady = SET;
 		wakeupTimeBase = 0x00;
+		PowerOffTimeBase = 0x00;
 	}
 }
 

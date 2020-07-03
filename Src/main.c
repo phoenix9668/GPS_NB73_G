@@ -40,10 +40,25 @@ uint8_t ERInfo[] = {0x30,0x36,0x00,0x01,0x01,0x45,0x52};//acknowledgeinfo = mess
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
 __IO uint8_t i;
-uint8_t Pregnant_Buffer[PREGNANTBUFFERSIZE]={2,0,0,0x1E,0,0x27,0,0x02,0,0x03,0,0x92,0,0x3E,0,0x02,0,0x52,0,0x72,0,0x78,0,0x8F,0,0x45,0,0xF0,
-																							0,0x78,0,0x37,0,0x2D,0,0x14,0,0x1F,0,0x33,0,0x0A,0,0x24,0,0x0C,0,0x1E,0,0x4D,0,0x12,0,0x01,
-																								0,0x1E,0,0x14,0,0x06,0,0x0A,0,0x01,0,0x1E,0,0x1E,0,0x04,0,0x28,0,0x32};
+//uint8_t Pregnant_Buffer[PREGNANTBUFFERSIZE]={2,0,0,0x1E,0,0x27,0,0x02,0,0x03,0,0x92,0,0x3E,0,0x02,0,0x52,0,0x72,0,0x78,0,0x8F,0,0x45,0,0xF0,
+//																							0,0x78,0,0x37,0,0x2D,0,0x14,0,0x1F,0,0x33,0,0x0A,0,0x24,0,0x0C,0,0x1E,0,0x4D,0,0x12,0,0x01,
+//																								0,0x1E,0,0x14,0,0x06,0,0x0A,0,0x01,0,0x1E,0,0x1E,0,0x04,0,0x28,0,0x32};
+uint8_t Pregnant_Buffer[PREGNANTBUFFERSIZE]={2,0,0,0x1E,0,0x27,0,0x02,0,0,0,0,0,0x01,0,0x02,0,0,0,0x32,0,0x14,0,0x4C,0,0x14,0,0x1E,
+																							0,0xC,0,0x02,0,0,0,0,0,0x14,0,0x14,0,0x2A,0,0x23,0,0x28,0,0x27,0,0x32,0,0x29,0,0x1D,
+																								0,0x1E,0,0x28,0,0x49,0,0x1E,0,0x14,0,0x13,0,0x46,0,0x50,0,0x5A,0,0x32};
 //uint8_t Pregnant_Buffer_backup[PREGNANTBUFFERSIZE]={0,0,0,0x96,0,0x64,0x01,0xAF,0,0xE8,0x02,0x0B,0x01,0xB4,0x02,0x18,0x02,0x13,0x01,0x48,0,0x96,0,0x6A,0,0x52};
+//uint8_t Pregnant_Buffer_backup1[PREGNANTBUFFERSIZE]={2,0,0,0x1,0,0x28,0,0x14,0,0x0C,0,0x17,0,0x16,0,0x0F,0,0x08,0,0xA,0,0x8,0,0x2,0,0xE,0,0x9,
+//																							0,0x8,0,0x10,0,0x12,0,0x11,0,0x9,0,0,0,0x1,0,0xD,0,0xA,0,0xD,0,0x5,0,0x3,0,0x4,
+//																								0,0x8,0,0x4,0,0x12,0,0x17,0,0x26,0,0x10,0,0x7,0,0x4,0,0x7,0,0};
+
+//uint8_t Pregnant_Buffer_backup2[PREGNANTBUFFERSIZE]={2,0,0,0x33,0,0,0,0xC,0,0x5,0,0xD,0,0xA,0,0x4,0,0x6,0,0x2,0,0x3,0,0x1,0,0x5,0,0x2,
+//																							0,0x3,0,0,0,0x1,0,0,0,0x11,0,0xB,0,0x2,0,0xA,0,0x2,0,0x12,0,0x1,0,0x1,0,0x2,
+//																								0,0x13,0,0xC,0,0x9,0,0x14,0,0x12,0,0xC,0,0xB,0,0x6,0,0xD,0,0x23};
+
+//uint8_t Pregnant_Buffer_backup3[PREGNANTBUFFERSIZE]={2,0,0,0x1,0,0x40,0,0x2C,0,0x26,0,0x12,0,0x45,0,0x88,0,0xE2,0,0x66,0,0x37,0,0x4B,0,0x66,0x01,0x01,
+//																							0,0xA4,0,0xBC,0,0x62,0,0x96,0,0xB4,0,0xA6,0,0xBE,0,0xE7,0,0x66,0,0xC6,0,0xBA,0,0x4D,0,0x41,
+//																								0,0x32,0,0x41,0,0x23,0,0x28,0,0x22,0,0,0,0,0,0,0,0x5,0,0};
+
 uint8_t Pregnant_TxBuffer[TxPREGNANTBUFFERSIZE];
 uint8_t GNSS_Buffer[GNSSBUFFERSIZE];
 uint8_t ALLGNSS_Buffer[ALLGNSSBUFFERSIZE];
@@ -56,10 +71,11 @@ extern __IO ITStatus LptimReady;
 extern __IO ITStatus PowerOffReady;
 extern __IO ITStatus PregnantReady;
 extern __IO uint8_t wakeupTimeBase;
+extern __IO uint8_t PowerOffTimeBase;
 extern __IO uint8_t WAKEUPTIME;
 extern __IO uint8_t RxCounter;
 extern __IO ITStatus AlarmReady;
-__IO uint8_t Pregnant_Buffer_Flag = 0;
+__IO uint8_t Pregnant_Buffer_Flag;
 __IO uint8_t History_Flag = 0;
 __IO uint8_t GNSS_Buffer_Flag = 0;
 __IO uint16_t biasAddress;
@@ -67,7 +83,12 @@ __IO FlagStatus SendState = RESET;
 __IO FlagStatus HistoryState = RESET;
 __IO FlagStatus AlarmState = RESET;
 __IO FlagStatus ConnectedState = RESET;
+__IO FlagStatus RelExtiState = RESET;
+__IO FlagStatus HistorySwich = RESET;
+
 extern __IO FlagStatus CommandState;
+
+//__IO uint8_t Pregnant_index = 0;
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -149,7 +170,8 @@ int main(void)
   LL_LPUART_EnableIT_RXNE(LPUART1);
 	LL_LPUART_EnableIT_ERROR(LPUART1);
 	
-//	EEPROM_READ(0,Pregnant_Buffer,PREGNANTBUFFERSIZE);
+	EEPROM_READ(0,Pregnant_Buffer,PREGNANTBUFFERSIZE);
+	Pregnant_Buffer_Flag = Pregnant_Buffer[1];
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -171,8 +193,25 @@ int main(void)
 			}
 			*(Pregnant_Buffer+Pregnant_Buffer_Flag*2+2) = (uint8_t)(0x000000FF & step>>8);
 			*(Pregnant_Buffer+Pregnant_Buffer_Flag*2+3) = (uint8_t)(0x000000FF & step);
-//			*(Pregnant_Buffer+Pregnant_Buffer_Flag*2+2) = Pregnant_Buffer_backup[Pregnant_Buffer_Flag*2];
-//			*(Pregnant_Buffer+Pregnant_Buffer_Flag*2+3) = Pregnant_Buffer_backup[Pregnant_Buffer_Flag*2+1];
+//			if(Pregnant_Buffer_Flag == 0x01)
+//			{
+//				Pregnant_index++;
+//			}
+//			if(Pregnant_index == 0x01)
+//			{
+//			*(Pregnant_Buffer+Pregnant_Buffer_Flag*2+2) = Pregnant_Buffer_backup1[Pregnant_Buffer_Flag*2+2];
+//			*(Pregnant_Buffer+Pregnant_Buffer_Flag*2+3) = Pregnant_Buffer_backup1[Pregnant_Buffer_Flag*2+3];
+//			}
+//			else if(Pregnant_index == 0x02)
+//			{
+//			*(Pregnant_Buffer+Pregnant_Buffer_Flag*2+2) = Pregnant_Buffer_backup2[Pregnant_Buffer_Flag*2+2];
+//			*(Pregnant_Buffer+Pregnant_Buffer_Flag*2+3) = Pregnant_Buffer_backup2[Pregnant_Buffer_Flag*2+3];			
+//			}
+//			else if(Pregnant_index == 0x03)
+//			{
+//			*(Pregnant_Buffer+Pregnant_Buffer_Flag*2+2) = Pregnant_Buffer_backup3[Pregnant_Buffer_Flag*2+2];
+//			*(Pregnant_Buffer+Pregnant_Buffer_Flag*2+3) = Pregnant_Buffer_backup3[Pregnant_Buffer_Flag*2+3];
+//			}
 			Pregnant_Buffer[0] = 0x02;
 			Pregnant_Buffer[1] = Pregnant_Buffer_Flag;
 			
@@ -184,7 +223,7 @@ int main(void)
 		if(LptimReady == SET)
 		{
 			REL_EXTI_DisInit();
-			LED_CHARGE_ON();
+//			LED_CHARGE_ON();
 			GPS_CHARGE_ON();
 			SendState = SET;
 			LptimReady = RESET;
@@ -198,6 +237,7 @@ int main(void)
 			GPS_CHARGE_ON();
 			AlarmState = SET;
 			AlarmReady = RESET;
+			PowerOffTimeBase = 0x00;			
 			RxCounter = 0x00;
 		}
 		
@@ -211,17 +251,24 @@ int main(void)
 		
 		if(RxBuffer[0] == 0x43 && RxBuffer[1] == 0x6F && RxBuffer[2] == 0x6E && RxBuffer[3] == 0x6E && RxBuffer[4] == 0x65 && RxBuffer[5] == 0x63 && RxBuffer[6] == 0x74 && RxBuffer[7] == 0x65 && RxBuffer[8] == 0x64)
 		{
-			if(SendState == SET)
+			if(ConnectedState == RESET)
 			{
-				if(ConnectedState == RESET)
+				LL_mDelay(2000);
+				PrintInfo((uint8_t*)ConnectedInfo, sizeof(ConnectedInfo));
+				if(SendState == SET)
 				{
-					LL_mDelay(2000);
-					PrintInfo((uint8_t*)ConnectedInfo, sizeof(ConnectedInfo));
 					LL_mDelay(100);
 					Bufferchg((uint8_t*)Pregnant_Buffer, (uint8_t*)Pregnant_TxBuffer, PREGNANTBUFFERSIZE, TxPREGNANTBUFFERSIZE);
 					PrintInfo((uint8_t*)Pregnant_TxBuffer, TxPREGNANTBUFFERSIZE);
-					ConnectedState = SET;
+				}	
+				ConnectedState = SET;
+				if(AlarmState == SET && HistorySwich == SET)
+				{
+					HistoryState = SET;
+					History_Flag = 0x00;
+					LL_mDelay(50);
 				}
+
 				for (i=0; i<RXBUFFERSIZE; i++) //clear array
 				{	RxBuffer[i] = 0; }
 				RxCounter = 0x00;
@@ -241,6 +288,25 @@ int main(void)
 					OKInfo[3] = RxBuffer[3];
 					PrintInfo((uint8_t*)OKInfo, sizeof(OKInfo));
 				}
+				else if(RxBuffer[8] == 0x30 && RxBuffer[9] == 0x32)
+				{
+					RelExtiState = RESET;
+					OKInfo[0] = 0x30;
+					OKInfo[1] = 0x36;
+					OKInfo[2] = RxBuffer[2];
+					OKInfo[3] = RxBuffer[3];
+					PrintInfo((uint8_t*)OKInfo, sizeof(OKInfo));
+				}
+				else if(RxBuffer[8] == 0x30 && RxBuffer[9] == 0x33)
+				{
+					RelExtiState = SET;
+					REL_EXTI_DisInit();
+					OKInfo[0] = 0x30;
+					OKInfo[1] = 0x36;
+					OKInfo[2] = RxBuffer[2];
+					OKInfo[3] = RxBuffer[3];
+					PrintInfo((uint8_t*)OKInfo, sizeof(OKInfo));
+				}	
 				else
 				{
 					ERInfo[0] = 0x30;
@@ -268,6 +334,24 @@ int main(void)
 					History_Flag = 0x00;
 					LL_mDelay(50);
 				}
+				else if(RxBuffer[8] == 0x30 && RxBuffer[9] == 0x32)
+				{
+					HistorySwich = RESET;
+					OKInfo[0] = 0x30;
+					OKInfo[1] = 0x39;
+					OKInfo[2] = RxBuffer[2];
+					OKInfo[3] = RxBuffer[3];
+					PrintInfo((uint8_t*)OKInfo, sizeof(OKInfo));
+				}
+				else if(RxBuffer[8] == 0x30 && RxBuffer[9] == 0x33)
+				{
+					HistorySwich = SET;
+					OKInfo[0] = 0x30;
+					OKInfo[1] = 0x39;
+					OKInfo[2] = RxBuffer[2];
+					OKInfo[3] = RxBuffer[3];
+					PrintInfo((uint8_t*)OKInfo, sizeof(OKInfo));
+				}	
 				else
 				{
 					ERInfo[0] = 0x30;
@@ -330,13 +414,13 @@ int main(void)
 		
 		if(HistoryState == SET)
 		{
-			biasAddress = 80+24*History_Flag;
+			biasAddress = 80+22*History_Flag;
 			ALLGNSS_Buffer[0] = 0x07;
-			EEPROM_READ(biasAddress,(uint8_t *)(ALLGNSS_Buffer+1),ALLGNSSBUFFERSIZE-1);
+			EEPROM_READ(biasAddress,(uint8_t *)(ALLGNSS_Buffer+1),GNSSBUFFERSIZE);
 			Bufferchg((uint8_t*)ALLGNSS_Buffer, (uint8_t*)ALLGNSS_TxBuffer, ALLGNSSBUFFERSIZE, TxALLGNSSBUFFERSIZE);
 			PrintInfo((uint8_t*)ALLGNSS_TxBuffer, TxALLGNSSBUFFERSIZE);
 			History_Flag++;
-			LL_mDelay(50);
+			LL_mDelay(100);
 			if(History_Flag == 0x06)
 			{
 				HistoryState = RESET;
@@ -360,7 +444,10 @@ int main(void)
 			SystemClock_Config();
 			LED_CHARGE_OFF();
 			GPS_CHARGE_OFF();
-			REL_EXTI_Init();
+			if(RelExtiState == RESET)
+			{
+				REL_EXTI_Init();
+			}
 			MX_SPI1_Init();
 			MX_LPUART1_UART_Init();
 			LL_LPUART_EnableIT_RXNE(LPUART1);

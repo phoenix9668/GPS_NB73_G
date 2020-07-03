@@ -64,9 +64,9 @@ extern "C" {
 /* Size of Reception buffer */
 #define RXBUFFERSIZE                      53
 #define PREGNANTBUFFERSIZE                74
-#define PREGNANTBUFFERFLAGLENGTH					36
+#define PREGNANTBUFFERFLAGLENGTH					35
 #define GNSSBUFFERSIZE                		22
-#define ALLGNSSBUFFERSIZE               	GNSSBUFFERSIZE+1
+#define ALLGNSSBUFFERSIZE               	23
 /* USER CODE END EC */
 
 /* Exported macro ------------------------------------------------------------*/
